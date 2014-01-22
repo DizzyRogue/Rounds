@@ -30,3 +30,5 @@ Round Bonus Points:
 Total Round Score = Multi Points + Round Bonus Points
 Total Score = Sum of total round scores
 
+
+

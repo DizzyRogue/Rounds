@@ -1,5 +1,3 @@
-# TODO add player and game class
-
 class Round:
 	target = 0
 	throws = 0

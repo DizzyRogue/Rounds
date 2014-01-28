@@ -1,18 +1,96 @@
+class Player:
+	player_name = ''
+	player_number = 0
+	player_target = 0
+	player_current_round = 1
+	player_hits = 0
+	player_multi_bonus = 0
+	player_bull = 0
+	player_19 = 0
+	player_18 = 0
+	player_17 = 0
+	player_16 = 0
+	player_15 = 0
+	player_total_score = 0
+
+class GamePlayers:
+
+	''' Player list dictionary, keeps track of player number and player name '''
+	player_list = []
+
+	number_of_players = 0
+	input_number = 1
+
+	def player_input(self):
+		how_many_players = raw_input("Please enter the number of players: ") # TODO, add validation that limits the input to numbers and the number of players to 4
+		self.number_of_players = int(how_many_players)
+		while self.number_of_players > 0:
+			new_player = Player()
+			new_player.player_name = raw_input(self.input_prompt() + " enter your name: ")
+			new_player.player_number = self.input_number
+			self.player_list.append(new_player)
+			self.number_of_players -= 1
+			self.input_number += 1
+
+	def input_prompt(self):
+		return "Player " + str(self.input_number)
+
+class Throw:
+	valid_dart = False
+	last_dart_input = 0
+
+	''' Dart input function '''
+	def throw_dart(self):
+		while self.valid_dart == False:
+			dart_input = raw_input("Use T, D, S or X to enter dart: ")
+			self.last_dart_input = dart_input
+			self.is_valid(self.last_dart_input)
+		else:
+			self.dart_hit_value()
+			self.dart_mult_value()
+
+	''' Dart input validation '''		
+	def is_valid(self, x):
+		if self.last_dart_input == "t" or self.last_dart_input == "d" or self.last_dart_input == "s" or self.last_dart_input == "x":
+			self.valid_dart = True
+		else:
+			self.valid_dart = False
+			print "============="
+			print "Invalid dart input! Please use T, D, S or X to enter dart."
+			print "============="
+		
+	def dart_hit_value(self):
+		return self.hit_calc(self.last_dart_input)
+		
+	def dart_mult_value(self):
+		return self.dart_score(self.last_dart_input)
+			
+	''' Give hit value to throw input '''
+	def hit_calc(self, dart):
+		if dart.lower() == "t":
+			return 3
+		if dart.lower() == "d":
+			return 2
+		if dart.lower() == "s":
+			return 1
+		if dart.lower() == "x":
+			return 0
+	
+	''' Give mult value to throw input '''
+	def dart_score(self, dart):
+		if dart.lower() == "t":
+			return 100
+		if dart.lower() == "d":
+			return 50
+		if dart.lower() == "s":
+			return 10
+		if dart.lower() == "x":
+			return 0	
+
 class Round:
-	target = 0
-	throws = 0
-	hits = 0	
-	round = 1
-	mult_score = 0 # Posted to scoreboard once target is advanced
 	bonus_score = 0	# Posted to scoreboard once target is advanced
-	
-	''' Initialize scoreboard for current round '''
-	def __init__(self, scoreBoard):
-		self.scoreBoard = scoreBoard
-	
+
 	def play(self):
-		while self.is_game_over() == False and self.throws < 3:
-			self.is_game_over()
 			throw = Throw()
 			throw.throw_dart()
 			self.hits += throw.dart_hit_value()
@@ -36,14 +114,8 @@ class Round:
 					print "%s: %s" % (key, self.scoreBoard.player_scoreboard[key])
 				print "============="
 				print "YOUR FINAL SCORE: " + str(sum(self.scoreBoard.player_scoreboard.values()))
-				print "============="
+				print "============="	
 	
-	''' Determines if the game is over '''
-	def is_game_over(self):
-		if self.target == 6 and self.hits >= 3: # MIGHT NEED CODE HERE TO COVER HANGERS ON 15's
-			return True
-		else:
-			return False
 	
 	''' Determine if the user needs to advance to the next round on CURRENT target, then add 1 to round '''
 	def nextRound(self):
@@ -145,99 +217,47 @@ class Round:
 	''' Prints post throw status '''		
 	def toString(self):
 		print "============="
-		print "Current Target: " + str(game.target)
-		print "Current Round: " + str(game.round)
-		print "Throws remaining: " + str(3 - game.throws)
-		print "Hits on current target: " + str(game.hits)
-		print "Set Mult Score: " + str(game.mult_score)
-		print "TOTAL SCORE: " + str(sum(self.scoreBoard.player_scoreboard.values()))
-		print "============="
-	
-	
-class Throw:
-	valid_dart = False
-	last_dart_input = 0
+		#print "Current Player: " + str(game_players.roundPlayers)
+		print "Current Target: " + str(new_round.target)
+		print "Current Round: " + str(new_round.round)
+		print "Throws remaining: " + str(3 - new_round.throws)
+		print "Hits on current target: " + str(new_round.hits)
+		print "Set Mult Score: " + str(new_round.mult_score)
+		#print "TOTAL SCORE: " + str(sum(self.scoreBoard.player_scoreboard.values()))
+		print "============="			
 
-	''' Dart input function '''
-	def throw_dart(self):
-		while self.valid_dart == False:
-			dart_input = raw_input("Use T, D, S or X to enter dart: ")
-			self.last_dart_input = dart_input
-			self.is_valid(self.last_dart_input)
+class Game:	
+	game_players = GamePlayers()
+
+	game_started = 0
+
+	'''Flag to start the game once all players have been entered'''
+	while game_started == 0:
+		game_players.player_input()
+		game_started += 1
+	if game_started == 1:
+		new_round = Round()
+		new_round.play()
+
+	''' Determines if the game is over '''
+	def is_game_over(self):
+		if self.target == 6 and self.hits >= 3: # MIGHT NEED CODE HERE TO COVER HANGERS ON 15's
+			return True
 		else:
-			self.dart_hit_value()
-			self.dart_mult_value()
+			return False	
 
-	''' Dart input validation '''		
-	def is_valid(self, x):
-		if self.last_dart_input == "t" or self.last_dart_input == "d" or self.last_dart_input == "s" or self.last_dart_input == "x":
-			self.valid_dart = True
-		else:
-			self.valid_dart = False
-			print "============="
-			print "Invalid dart input! Please use T, D, S or X to enter dart."
-			print "============="
-		
-	def dart_hit_value(self):
-		return self.hit_calc(self.last_dart_input)
-		
-	def dart_mult_value(self):
-		return self.dart_score(self.last_dart_input)
-			
-	''' Give hit value to throw input '''
-	def hit_calc(self, dart):
-		if dart.lower() == "t":
-			return 3
-		if dart.lower() == "d":
-			return 2
-		if dart.lower() == "s":
-			return 1
-		if dart.lower() == "x":
-			return 0
-	
-	''' Give mult value to throw input '''
-	def dart_score(self, dart):
-		if dart.lower() == "t":
-			return 100
-		if dart.lower() == "d":
-			return 50
-		if dart.lower() == "s":
-			return 10
-		if dart.lower() == "x":
-			return 0	
 
-class Scoreboard:
+	while self.is_game_over() == False and self.throws < 3:
+		pass				
 
-	''' Player's Scoreboard '''
-	player_scoreboard = {
-		"Bull": 0,
-		"20  ": 0,
-		"19  ": 0,
-		"18  ": 0,
-		"17  ": 0,
-		"16  ": 0,
-		"15  ": 0,
-	}
-
-	''' Takes in current target and sets player_scoreboard value for that target '''
-	def score_updater(self, target):
-		if target == 0:
-			self.player_scoreboard['Bull'] = game.mult_score + game.bonus_score
-		if target == 1:
-			self.player_scoreboard['20  '] = game.mult_score + game.bonus_score
-		if target == 2:
-			self.player_scoreboard['19  '] = game.mult_score + game.bonus_score
-		if target == 3:
-			self.player_scoreboard['18  '] = game.mult_score + game.bonus_score
-		if target == 4:
-			self.player_scoreboard['17  '] = game.mult_score + game.bonus_score
-		if target == 5:
-			self.player_scoreboard['16  '] = game.mult_score + game.bonus_score
-		if target == 6:
-			self.player_scoreboard['15  '] = game.mult_score + game.bonus_score
 
 			
 ''' Game Loop '''
-score = Scoreboard()
-game = Round(score)
-game.play()
+
+
+#players = Players()
+#enter_players = players.player_input()
+#game_players = players.player_list
+#score = Scoreboard()
+#game = Round(score, game_players)
+#game.play()

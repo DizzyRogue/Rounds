@@ -1,17 +1,21 @@
 class Player:
-	player_name = ''
-	player_number = 0
-	player_target = 0
-	player_current_round = 1
-	player_hits = 0
-	player_multi_bonus = 0
-	player_bull = 0
-	player_19 = 0
-	player_18 = 0
-	player_17 = 0
-	player_16 = 0
-	player_15 = 0
-	player_total_score = 0
+
+	def __init__(self, name, number, target, throws, current_round, hits, multi_bonus, bull, p19, p18, p17, p16, p15, total_score, finished):
+		self.name = name
+		self.number = number
+		self.target = target
+		self.throws = throws
+		self.current_round = current_round
+		self.hits = hits
+		self.multi_bonus = multi_bonus
+		self.bull = bull
+		self.p19 = p19
+		self.p18 = p18
+		self.p17 = p17
+		self.p16 = p16
+		self.p15 = p15
+		self.total_score = total_score
+		self.finished = finished
 
 class GamePlayers:
 
@@ -25,12 +29,15 @@ class GamePlayers:
 		how_many_players = raw_input("Please enter the number of players: ") # TODO, add validation that limits the input to numbers and the number of players to 4
 		self.number_of_players = int(how_many_players)
 		while self.number_of_players > 0:
-			new_player = Player()
+			new_player = Player('', 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 			new_player.player_name = raw_input(self.input_prompt() + " enter your name: ")
 			new_player.player_number = self.input_number
 			self.player_list.append(new_player)
 			self.number_of_players -= 1
 			self.input_number += 1
+
+	def player_return(self):
+		return self.player_list
 
 	def input_prompt(self):
 		return "Player " + str(self.input_number)
@@ -90,12 +97,13 @@ class Throw:
 class Round:
 	bonus_score = 0	# Posted to scoreboard once target is advanced
 
-	def play(self):
+
+	def play(self, player):
 			throw = Throw()
 			throw.throw_dart()
-			self.hits += throw.dart_hit_value()
-			self.mult_score += throw.dart_mult_value()
-			self.throws += 1
+			player.hits += throw.dart_hit_value()
+			player.multi_bonus += throw.dart_mult_value()
+			player.throws += 1
 			self.maxRounds()
 			self.nextRound()
 			self.is_hanger()
@@ -119,20 +127,20 @@ class Round:
 	
 	''' Determine if the user needs to advance to the next round on CURRENT target, then add 1 to round '''
 	def nextRound(self):
-		if self.hits < 3 and self.throws == 3:
-			self.round += 1
-			self.throws = 0
-			mult_score = 0
-			if self.round < 6:
+		if player.hits < 3 and player.throws == 3:
+			player.current_round += 1
+			player.throws = 0
+			player.mult_score = 0
+			if player.current_round < 6:
 				print "============="
-				print "You are still aiming at, " + str(self.target) + ", begin next round!"
+				print "You are still aiming at, " + str(player.target) + ", begin next round!"
 			else:
 				print "============="
-				print "You failed to finish out, " + str(self.target) + ", start round one of next target!"
+				print "You failed to finish out, " + str(player.target) + ", start round one of next target!"
 				
 	''' Max round function to prevent user from playing more than 5 rounds in a set '''
 	def maxRounds(self):
-		if self.round == 6:
+		if player.current_round == 6:
 			return True
 	
 	''' Calculate if ready to advance to next target '''
@@ -236,8 +244,12 @@ class Game:
 		game_players.player_input()
 		game_started += 1
 	if game_started == 1:
-		new_round = Round()
-		new_round.play()
+		for x in game_players.player_list:
+			new_round = Round()
+			new_round.play(x)
+
+		#new_round = Round() 
+		#new_round.play() 
 
 	''' Determines if the game is over '''
 	def is_game_over(self):

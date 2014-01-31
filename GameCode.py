@@ -1,10 +1,9 @@
 class Player:
 
-	def __init__(self, name, number, target, throws, current_round, hits, multi_bonus, bull, p19, p18, p17, p16, p15, total_score, finished):
+	def __init__(self, name, number, target, current_round, hits, multi_bonus, bull, p19, p18, p17, p16, p15, total_score, finished):
 		self.name = name
 		self.number = number
 		self.target = target
-		self.throws = throws
 		self.current_round = current_round
 		self.hits = hits
 		self.multi_bonus = multi_bonus
@@ -29,7 +28,7 @@ class GamePlayers:
 		how_many_players = raw_input("Please enter the number of players: ") # TODO, add validation that limits the input to numbers and the number of players to 4
 		self.number_of_players = int(how_many_players)
 		while self.number_of_players > 0:
-			new_player = Player('', 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+			new_player = Player('', 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 			new_player.player_name = raw_input(self.input_prompt() + " enter your name: ")
 			new_player.player_number = self.input_number
 			self.player_list.append(new_player)
@@ -95,7 +94,10 @@ class Throw:
 			return 0	
 
 class Round:
-	bonus_score = 0	# Posted to scoreboard once target is advanced
+
+	def __init__(self, roundThrows, roundBonus):
+		self.roundThrows = roundThrows
+		self.roundBonus = roundBonus
 
 
 	def play(self, player):
@@ -103,12 +105,44 @@ class Round:
 			throw.throw_dart()
 			player.hits += throw.dart_hit_value()
 			player.multi_bonus += throw.dart_mult_value()
-			player.throws += 1
-			self.maxRounds()
-			self.nextRound()
-			self.is_hanger()
-			self.calculate_current_target()
-			self.toString()
+			self.roundThrows += 1
+			atMaxRound = Round.maxRounds(player)
+			needNextRound = Round.nextRound(player, self.roundThrows)
+			isHanger = Round.is_hanger(player, self.roundThrows)
+			needNewTarget = Round.newTarget(player, atMaxRound)
+			if needNewTarget == True and isHanger == False: # Advance target, non-hanger workflow
+				player.bonus_score = player.round_bonus_score(player.round) # Calculates bonus_score for completed round
+				player.scoreBoard.score_updater(player.target) # Set Mult Score and add it to bonus_score for previous round and post it to the scoreboard
+				print "============="
+				print "Previous round bonus score: " + str(player.bonus_score)
+				print "Previous round multi score: " + str(player.mult_score)
+				print "============="
+				print "Score as of last round: "
+				for key in sorted(self.scoreBoard.player_scoreboard.iterkeys(), reverse=True):
+					print "%s: %s" % (key, self.scoreBoard.player_scoreboard[key])
+				print "============="
+				player.target += 1
+				player.hits = 0
+				player.round = 1
+				self.throws = 0
+				player.mult_score = 0
+				self.bonus_score = 0
+			if needNewTarget == True and isHanger == True: # Advance target, hanger workflow
+				self.bonus_score = self.round_bonus_score(self.round) # Calculates bonus_score for completed round
+				self.scoreBoard.score_updater(self.target) # Set Mult Score and add it to bonus_score for previous round and post it to the scoreboard
+				print "============="
+				print "Previous round bonus score: " + str(self.bonus_score)
+				print "Previous round multi score: " + str(self.mult_score)
+				print "============="
+				print "Score as of last round: "
+				for key in sorted(self.scoreBoard.player_scoreboard.iterkeys(), reverse=True):
+					print "%s: %s" % (key, self.scoreBoard.player_scoreboard[key])
+				print "============="
+				print "HANGER TIME!"
+				self.hanger_target() # This may need work...
+				self.toString()
+
+			''' TO DO, move this code into Game '''			
 			if self.is_game_over() == True:
 				self.bonus_score = self.round_bonus_score(self.round) # Calculates bonus_score for completed round
 				self.scoreBoard.score_updater(self.target) # Set Mult Score and add it to bonus_score for previous round and post it to the scoreboard
@@ -124,12 +158,27 @@ class Round:
 				print "YOUR FINAL SCORE: " + str(sum(self.scoreBoard.player_scoreboard.values()))
 				print "============="	
 	
-	
+	#''' Calculate & set new target based on when hits > 3 '''
+	#@staticmethod
+	#def calculate_current_target(player, throws):
+
+
+	''' Static Methods '''	
+	''' Max round function to prevent user from playing more than 5 rounds in a set '''
+	@staticmethod
+	def maxRounds(player):
+		if player.current_round == 6:
+			return True
+		else:
+			return False	
+
+
 	''' Determine if the user needs to advance to the next round on CURRENT target, then add 1 to round '''
-	def nextRound(self):
-		if player.hits < 3 and player.throws == 3:
+	@staticmethod
+	def nextRound(player, throws):
+		if player.hits < 3 and throws == 3:
 			player.current_round += 1
-			player.throws = 0
+			throws = 0
 			player.mult_score = 0
 			if player.current_round < 6:
 				print "============="
@@ -138,57 +187,23 @@ class Round:
 				print "============="
 				print "You failed to finish out, " + str(player.target) + ", start round one of next target!"
 				
-	''' Max round function to prevent user from playing more than 5 rounds in a set '''
-	def maxRounds(self):
-		if player.current_round == 6:
-			return True
+
 	
 	''' Calculate if ready to advance to next target '''
-	def newTarget(self):
-		if self.target < 6:
-			if self.hits >= 3 or self.maxRounds() == True:
+	@staticmethod
+	def newTarget(player, maxRound):
+		if player.target < 6:
+			if player.hits >= 3 or maxRound == True:
 				return True
-		else:
-			return False
+			else:
+				return False
 	
-	''' Calculate & set new target based on when hits > 3 '''
-	def calculate_current_target(self):
-		if self.newTarget() == True and self.is_hanger() == False: # Advance target, non-hanger workflow
-			self.bonus_score = self.round_bonus_score(self.round) # Calculates bonus_score for completed round
-			self.scoreBoard.score_updater(self.target) # Set Mult Score and add it to bonus_score for previous round and post it to the scoreboard
-			print "============="
-			print "Previous round bonus score: " + str(self.bonus_score)
-			print "Previous round multi score: " + str(self.mult_score)
-			print "============="
-			print "Score as of last round: "
-			for key in sorted(self.scoreBoard.player_scoreboard.iterkeys(), reverse=True):
-				print "%s: %s" % (key, self.scoreBoard.player_scoreboard[key])
-			print "============="
-			self.target += 1
-			self.hits = 0
-			self.round = 1
-			self.throws = 0
-			self.mult_score = 0
-			self.bonus_score = 0
-		if self.newTarget() == True and self.is_hanger() == True: # Advance target, hanger workflow
-			self.bonus_score = self.round_bonus_score(self.round) # Calculates bonus_score for completed round
-			self.scoreBoard.score_updater(self.target) # Set Mult Score and add it to bonus_score for previous round and post it to the scoreboard
-			print "============="
-			print "Previous round bonus score: " + str(self.bonus_score)
-			print "Previous round multi score: " + str(self.mult_score)
-			print "============="
-			print "Score as of last round: "
-			for key in sorted(self.scoreBoard.player_scoreboard.iterkeys(), reverse=True):
-				print "%s: %s" % (key, self.scoreBoard.player_scoreboard[key])
-			print "============="
-			print "HANGER TIME!"
-			self.hanger_target() # This may need work...
-			
 		
-	''' Calculate if the user has hangers '''	
-	def is_hanger(self):
-		if self.target < 6:
-			if self.throws < 3 and self.hits >=3:
+	''' Calculate if the user has hangers '''
+	@staticmethod	
+	def is_hanger(player, throws):
+		if player.target < 6:
+			if throws < 3 and player.hits >=3:
 				return True
 			else:
 				return False
@@ -223,7 +238,7 @@ class Round:
 		
 
 	''' Prints post throw status '''		
-	def toString(self):
+	def toString(player):
 		print "============="
 		#print "Current Player: " + str(game_players.roundPlayers)
 		print "Current Target: " + str(new_round.target)
@@ -245,11 +260,9 @@ class Game:
 		game_started += 1
 	if game_started == 1:
 		for x in game_players.player_list:
-			new_round = Round()
+			new_round = Round(0, 0)
 			new_round.play(x)
 
-		#new_round = Round() 
-		#new_round.play() 
 
 	''' Determines if the game is over '''
 	def is_game_over(self):
